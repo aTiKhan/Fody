@@ -14,7 +14,9 @@ using Mono.Cecil.Rocks;
 using FieldAttributes = Mono.Cecil.FieldAttributes;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
-public partial class InnerWeaver : MarshalByRefObject, IInnerWeaver
+public partial class InnerWeaver :
+    MarshalByRefObject,
+    IInnerWeaver
 {
     public string ProjectDirectoryPath { get; set; }
     public string ProjectFilePath { get; set; }
@@ -140,22 +142,36 @@ public partial class InnerWeaver : MarshalByRefObject, IInnerWeaver
                 return;
             }
 
-            Logger.LogDebug($"Weaver '{weaverConfig.AssemblyPath}'.");
-            Logger.LogDebug("  Initializing weaver");
-            var assembly = LoadWeaverAssembly(weaverConfig.AssemblyPath);
-            var weaverType = assembly.FindType(weaverConfig.TypeName);
-
-            var delegateHolder = weaverType.GetDelegateHolderFromCache();
-            var weaverInstance = delegateHolder();
-            var weaverHolder = new WeaverHolder
-            {
-                Instance = weaverInstance,
-                Config = weaverConfig
-            };
+            var weaverHolder = InitialiseWeaver(weaverConfig);
             weaverInstances.Add(weaverHolder);
-
-            SetProperties(weaverConfig, weaverInstance);
         }
+    }
+
+    WeaverHolder InitialiseWeaver(WeaverEntry weaverConfig)
+    {
+        Logger.LogDebug($"Weaver '{weaverConfig.AssemblyPath}'.");
+        Logger.LogDebug("  Initializing weaver");
+        var assembly = LoadWeaverAssembly(weaverConfig.AssemblyPath);
+        var weaverType = assembly.FindType(weaverConfig.TypeName);
+
+        var delegateHolder = weaverType.GetDelegateHolderFromCache();
+        var weaverInstance = delegateHolder();
+        var weaverHolder = new WeaverHolder
+        {
+            Instance = weaverInstance,
+            Config = weaverConfig
+        };
+
+        if (FodyVersion.WeaverRequiresUpdate(assembly, out var referencedVersion))
+        {
+            Logger.LogWarning($"Weavers should reference at least the current major version of Fody (version {FodyVersion.Major}). The weaver in {assembly.GetName().Name} references version {referencedVersion}. This may result in incompatibilities at build time such as MissingMethodException being thrown.", "FodyVersionMismatch");
+            weaverHolder.IsUsingOldFodyVersion = true;
+        }
+
+        weaverHolder.FodyVersion = referencedVersion;
+
+        SetProperties(weaverConfig, weaverInstance);
+        return weaverHolder;
     }
 
     void ExecuteWeavers()
@@ -178,10 +194,19 @@ public partial class InnerWeaver : MarshalByRefObject, IInnerWeaver
                 {
                     weaver.Instance.Execute();
                 }
+                catch (WeavingException)
+                {
+                    throw;
+                }
+                catch (MissingMemberException exception) when (weaver.IsUsingOldFodyVersion)
+                {
+                    throw new WeavingException($"Failed to execute weaver {weaver.Config.AssemblyPath} due to a MissingMemberException. Message: {exception.Message}. This is likely due to the weaver referencing an old version ({weaver.FodyVersion}) of Fody.");
+                }
                 catch (Exception exception)
                 {
                     throw new Exception($"Failed to execute weaver {weaver.Config.AssemblyPath}", exception);
                 }
+
                 var finishedMessage = $"  Finished '{weaver.Config.ElementName}' in {startNew.ElapsedMilliseconds}ms {Environment.NewLine}";
                 Logger.LogDebug(finishedMessage);
 

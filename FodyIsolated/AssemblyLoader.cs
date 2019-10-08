@@ -15,9 +15,7 @@ public partial class InnerWeaver
             return assembly;
         }
         Logger.LogDebug($"  Loading '{assemblyPath}' from disk.");
-        var loadFromFile = LoadFromFile(assemblyPath);
-
-        return assemblies[assemblyPath] = loadFromFile;
+        return assemblies[assemblyPath] = LoadFromFile(assemblyPath);
     }
 
     static Assembly LoadFromFile(string assemblyPath)

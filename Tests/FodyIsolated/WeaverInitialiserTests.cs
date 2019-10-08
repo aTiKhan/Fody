@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fody;
@@ -7,8 +8,10 @@ using Xunit;
 using Xunit.Abstractions;
 
 public class WeaverInitialiserTests :
-    XunitLoggingBase
+    XunitApprovalBase
 {
+    IDisposable disposable;
+
     [Fact]
     public void ValidPropsFromBase()
     {
@@ -27,7 +30,7 @@ public class WeaverInitialiserTests :
         innerWeaver.SetProperties(weaverEntry, moduleWeaver);
 
         SerializerBuilder.IgnoreMembersWithType<ModuleDefinition>();
-        ObjectApprover.VerifyWithJson(moduleWeaver);
+        ObjectApprover.Verify(moduleWeaver);
     }
 
     static InnerWeaver BuildInnerWeaver(ModuleDefinition moduleDefinition, AssemblyResolver resolver)
@@ -60,6 +63,13 @@ public class WeaverInitialiserTests :
     public WeaverInitialiserTests(ITestOutputHelper output) :
         base(output)
     {
+        disposable = RuntimeNamer.BuildForRuntime();
+    }
+
+    public override void Dispose()
+    {
+        disposable.Dispose();
+        base.Dispose();
     }
 }
 

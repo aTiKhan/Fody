@@ -1,13 +1,12 @@
 using System;
 using ApprovalTests;
-using ApprovalTests.Namers;
 using DummyAssembly;
 using Fody;
 using Xunit;
-// ReSharper disable UnusedVariable
+using Xunit.Abstractions;
 
 public class IldasmTests :
-    IDisposable
+    XunitApprovalBase
 {
     IDisposable disposable;
 
@@ -17,33 +16,24 @@ public class IldasmTests :
         Assert.True(Ildasm.FoundIldasm);
     }
 
-    public IldasmTests()
+    public IldasmTests(ITestOutputHelper outputHelper) :
+        base(outputHelper)
     {
-#if DEBUG
-        disposable = NamerFactory.AsEnvironmentSpecificTest(() => "Debug" + ApprovalResults.GetDotNetRuntime(true));
-#else
-        disposable = NamerFactory.AsEnvironmentSpecificTest(() => "Release" + ApprovalResults.GetDotNetRuntime(true));
-#endif
+        disposable = RuntimeNamer.BuildForRuntimeAndConfig();
     }
 
     [Fact]
     public void VerifyMethod()
     {
         var verify = Ildasm.Decompile(GetAssemblyPath(), "DummyAssembly.Class1::Method");
-        using (ApprovalResults.UniqueForRuntime())
-        {
-            Approvals.Verify(verify);
-        }
+        Approvals.Verify(verify);
     }
 
     [Fact]
     public void Verify()
     {
         var verify = Ildasm.Decompile(GetAssemblyPath());
-        using (ApprovalResults.UniqueForRuntime())
-        {
-            Approvals.Verify(verify);
-        }
+        Approvals.Verify(verify);
     }
 
     static string GetAssemblyPath()
@@ -54,8 +44,9 @@ public class IldasmTests :
         return Uri.UnescapeDataString(uri.Path);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         disposable.Dispose();
+        base.Dispose();
     }
 }
