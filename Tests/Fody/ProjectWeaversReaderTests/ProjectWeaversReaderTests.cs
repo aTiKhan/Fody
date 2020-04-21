@@ -1,21 +1,22 @@
-using ApprovalTests;
-using Fody;
+using System;
+using System.Threading.Tasks;
+using VerifyXunit;
 using Xunit;
 using Xunit.Abstractions;
 
 public class ProjectWeaversReaderTests :
-    XunitApprovalBase
+    VerifyBase
 {
     [Fact]
-    public void Invalid()
+    public Task Invalid()
     {
         var path =  @"Fody\ProjectWeaversReaderTests\Invalid.txt";
 
-        var exception = Assert.Throws<WeavingException>(() => XDocumentEx.Load(path));
-        Approvals.Verify(exception.Message);
+        var exception = Assert.ThrowsAny<Exception>(() => XDocumentEx.Load(path));
+        return Verify(exception.Message);
     }
 
-    public ProjectWeaversReaderTests(ITestOutputHelper output) : 
+    public ProjectWeaversReaderTests(ITestOutputHelper output) :
         base(output)
     {
     }

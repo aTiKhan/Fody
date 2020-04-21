@@ -1,35 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using Fody;
 
 public partial class Processor
 {
-    public string AssemblyFilePath;
-    public string IntermediateDirectory;
-    public string KeyFilePath;
+    public string AssemblyFilePath = null!;
+    public string IntermediateDirectory = null!;
+    public string KeyFilePath = null!;
     public bool SignAssembly;
-    public string ProjectDirectory;
-    public string ProjectFilePath;
-    public string DocumentationFilePath;
-    public string References;
-    public string SolutionDirectory;
-    public List<WeaverEntry> Weavers;
-    public DebugSymbolsType DebugSymbols;
-    public List<string> ReferenceCopyLocalPaths;
-    public List<string> DefineConstants;
+    public string ProjectDirectory = null!;
+    public string ProjectFilePath = null!;
+    public string DocumentationFilePath = null!;
+    public string References = null!;
+    public string SolutionDirectory = null!;
+    public List<WeaverEntry> Weavers = null!;
+    public List<string> ReferenceCopyLocalPaths = null!;
+    public List<string> DefineConstants = null!;
 
-    public List<WeaverConfigFile> ConfigFiles;
-    public Dictionary<string, WeaverConfigEntry> ConfigEntries;
+    public List<WeaverConfigFile> ConfigFiles = null!;
+    public Dictionary<string, WeaverConfigEntry> ConfigEntries = null!;
     public bool GenerateXsd;
-    IInnerWeaver innerWeaver;
+    IInnerWeaver? innerWeaver;
 
     static Dictionary<string, IsolatedAssemblyLoadContext> solutionAssemblyLoadContexts =
         new Dictionary<string, IsolatedAssemblyLoadContext>(StringComparer.OrdinalIgnoreCase);
 
-    public ILogger Logger;
+    public ILogger Logger = null!;
     static readonly object mutex = new object();
 
     static Processor()
@@ -41,7 +38,7 @@ public partial class Processor
     {
         var assembly = typeof(Processor).Assembly;
 
-        Logger.LogInfo($"Fody (version {FodyVersion.Version} @ {assembly.CodeBase}) Executing");
+        Logger.LogInfo($"Fody (version {typeof(Processor).Assembly.GetName().Version} @ {assembly.CodeBase}) Executing");
 
         var stopwatch = Stopwatch.StartNew();
 
@@ -127,8 +124,7 @@ public partial class Processor
     {
         var loadContext = GetLoadContext();
 
-        var assemblyFile = Path.Combine(AssemblyLocation.CurrentDirectory, "FodyIsolated.dll");
-        using (innerWeaver = (IInnerWeaver)loadContext.CreateInstanceFromAndUnwrap(assemblyFile, "InnerWeaver"))
+        using (innerWeaver = loadContext.CreateInstanceFromAndUnwrap())
         {
             innerWeaver.AssemblyFilePath = AssemblyFilePath;
             innerWeaver.References = References;
@@ -143,7 +139,6 @@ public partial class Processor
             innerWeaver.ProjectDirectoryPath = ProjectDirectory;
             innerWeaver.ProjectFilePath = ProjectFilePath;
             innerWeaver.DocumentationFilePath = DocumentationFilePath;
-            innerWeaver.DebugSymbols = DebugSymbols;
 
             innerWeaver.Execute();
 
@@ -171,7 +166,7 @@ public partial class Processor
     IsolatedAssemblyLoadContext CreateAssemblyLoadContext()
     {
         Logger.LogDebug("Creating a new AssemblyLoadContext");
-        return new IsolatedAssemblyLoadContext($"Fody Domain for '{SolutionDirectory}'", AssemblyLocation.CurrentDirectory);
+        return new IsolatedAssemblyLoadContext();
     }
 
     public void Cancel()

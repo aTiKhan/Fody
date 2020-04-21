@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using Fody;
@@ -10,8 +11,8 @@ using StrongNameKeyPair=System.Reflection.StrongNameKeyPair;
 
 public partial class InnerWeaver
 {
-    public StrongNameKeyPair StrongNameKeyPair;
-    public byte[] PublicKey;
+    public StrongNameKeyPair? StrongNameKeyPair;
+    public byte[]? PublicKey;
 
     public virtual void FindStrongNameKey()
     {
@@ -37,7 +38,7 @@ public partial class InnerWeaver
                 // the assembly is delay-signed with a public only keyfile.
                 PublicKey = StrongNameKeyPair.PublicKey;
             }
-            catch(System.ArgumentException)
+            catch(ArgumentException)
             {
                 // We know that we cannot sign the assembly with this keyfile. Let's assume that it is a public
                 // only keyfile and pass along all the bytes.
@@ -47,7 +48,7 @@ public partial class InnerWeaver
         }
     }
 
-    string GetKeyFilePath()
+    string? GetKeyFilePath()
     {
         if (KeyFilePath != null)
         {

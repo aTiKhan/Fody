@@ -1,21 +1,28 @@
-﻿#if NET472
+﻿using System.IO;
+#if NET472
 using System;
+
 public class IsolatedAssemblyLoadContext
 {
     AppDomain appDomain;
 
-    public IsolatedAssemblyLoadContext(string friendlyName, string applicationBase)
+    public IsolatedAssemblyLoadContext()
     {
         var appDomainSetup = new AppDomainSetup
         {
-            ApplicationBase = applicationBase,
+            ApplicationBase = AssemblyLocation.CurrentDirectory,
         };
-        appDomain = AppDomain.CreateDomain(friendlyName, null, appDomainSetup);
+        appDomain = AppDomain.CreateDomain("Fody AppDomain", null, appDomainSetup);
     }
 
-    public object CreateInstanceFromAndUnwrap(string assemblyPath, string typeName)
+    public IInnerWeaver CreateInstanceFromAndUnwrap()
     {
-        return appDomain.CreateInstanceFromAndUnwrap(assemblyPath, typeName);
+        var assemblyFile = Path.Combine(AssemblyLocation.CurrentDirectory, "FodyIsolated.dll");
+        var innerWeaver = (IInnerWeaver)appDomain.CreateInstanceFromAndUnwrap(assemblyFile, "InnerWeaver");
+        #if(NETSTANDARD)
+        innerWeaver.LoadContext = this;
+        #endif
+        return innerWeaver;
     }
 
     public void Unload()
@@ -27,24 +34,38 @@ public class IsolatedAssemblyLoadContext
 using System.Reflection;
 using System.Runtime.Loader;
 
-public class IsolatedAssemblyLoadContext : AssemblyLoadContext
+public class IsolatedAssemblyLoadContext :
+    AssemblyLoadContext
 {
-    // ReSharper disable UnusedParameter.Local
-    public IsolatedAssemblyLoadContext(string friendlyName, string applicationBase)
+    protected override Assembly? Load(AssemblyName assemblyName)
     {
-    }
-    // ReSharper restore UnusedParameter.Local
+        if (assemblyName.Name == "FodyCommon")
+        {
+            return typeof(ILogger).Assembly;
+        }
+        var assemblyFile = Path.Combine(AssemblyLocation.CurrentDirectory, assemblyName.Name+".dll");
 
-    /// <inheritdoc />
-    protected override Assembly Load(AssemblyName assemblyName)
-    {
+        if (File.Exists(assemblyFile))
+        {
+            return LoadFromAssemblyPath(assemblyFile);
+        }
+
         return null;
     }
 
-    public object CreateInstanceFromAndUnwrap(string assemblyPath, string typeName)
+    public IInnerWeaver CreateInstanceFromAndUnwrap()
     {
-        var assembly = LoadFromAssemblyPath(assemblyPath);
-        return assembly.CreateInstance(typeName);
+        var assemblyFile = Path.Combine(AssemblyLocation.CurrentDirectory, "FodyIsolated.dll");
+        var assembly = LoadFromAssemblyPath(assemblyFile);
+        var innerWeaver = (IInnerWeaver)assembly.CreateInstance("InnerWeaver");
+        innerWeaver.LoadContext = this;
+        return innerWeaver;
+    }
+
+    public Assembly LoadNotLocked(string assemblyPath)
+    {
+        using var stream = File.OpenRead(assemblyPath);
+        return LoadFromStream(stream);
     }
 
     public void Unload()

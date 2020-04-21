@@ -2,18 +2,14 @@ using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 
-using Fody;
-
 public static class XDocumentEx
 {
     public static XDocument Load(string path)
     {
         try
         {
-            using (var reader = new StreamReader(FileEx.OpenRead(path)))
-            {
-                return XDocument.Load(reader);
-            }
+            using var reader = new StreamReader(FileEx.OpenRead(path));
+            return XDocument.Load(reader);
         }
         catch (XmlException exception)
         {

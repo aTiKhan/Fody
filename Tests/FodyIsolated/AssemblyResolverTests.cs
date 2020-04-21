@@ -2,11 +2,12 @@
 using System.IO;
 using System.Linq;
 using DummyAssembly;
+using VerifyXunit;
 using Xunit;
 using Xunit.Abstractions;
 
 public class AssemblyResolverTests :
-    XunitApprovalBase
+    VerifyBase
 {
     ILogger logger = new MockBuildLogger();
 
@@ -20,10 +21,8 @@ public class AssemblyResolverTests :
             File.Copy(assembly.Location, assemblyPath, true);
 
             var resolver = new AssemblyResolver(logger, new[] {assemblyPath});
-            using (var resolvedAssembly = resolver.Resolve(assembly.GetName().Name))
-            {
-                Assert.Equal(assembly.FullName, resolvedAssembly.FullName);
-            }
+            using var resolvedAssembly = resolver.Resolve(assembly.GetName().Name);
+            Assert.Equal(assembly.FullName, resolvedAssembly.FullName);
         }
         finally
         {

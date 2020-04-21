@@ -18,26 +18,28 @@ public partial class InnerWeaver :
     MarshalByRefObject,
     IInnerWeaver
 {
-    public string ProjectDirectoryPath { get; set; }
-    public string ProjectFilePath { get; set; }
-    public string DocumentationFilePath { get; set; }
-    public string AssemblyFilePath { get; set; }
-    public string SolutionDirectoryPath { get; set; }
-    public string References { get; set; }
-    public List<WeaverEntry> Weavers { get; set; }
-    public string KeyFilePath { get; set; }
+    public string ProjectDirectoryPath { get; set; } = null!;
+    public string ProjectFilePath { get; set; } = null!;
+    public string DocumentationFilePath { get; set; } = null!;
+    public string AssemblyFilePath { get; set; } = null!;
+    public string SolutionDirectoryPath { get; set; } = null!;
+    public string References { get; set; } = null!;
+    public List<WeaverEntry> Weavers { get; set; } = null!;
+    public string KeyFilePath { get; set; } = null!;
     public bool SignAssembly { get; set; }
-    public ILogger Logger { get; set; }
-    public string IntermediateDirectoryPath { get; set; }
-    public List<string> ReferenceCopyLocalPaths { get; set; }
-    public List<string> DefineConstants { get; set; }
-    public DebugSymbolsType DebugSymbols { get; set; }
+    public ILogger Logger { get; set; }= null!;
+    public string IntermediateDirectoryPath { get; set; } = null!;
+    public List<string> ReferenceCopyLocalPaths { get; set; } = null!;
+    public List<string> DefineConstants { get; set; } = null!;
+    #if (NETSTANDARD)
+    public IsolatedAssemblyLoadContext LoadContext { get; set; } = null!;
+    #endif
     bool cancelRequested;
     List<WeaverHolder> weaverInstances = new List<WeaverHolder>();
-    Action cancelDelegate;
-    public AssemblyResolver assemblyResolver;
+    Action? cancelDelegate;
+    public IAssemblyResolver assemblyResolver = null!;
 
-    Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+    Assembly? CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
     {
         var assemblyName = new AssemblyName(args.Name).Name;
         if (assemblyName == "FodyHelpers")
@@ -84,14 +86,14 @@ public partial class InnerWeaver :
         return null;
     }
 
-    public TypeCache TypeCache;
+    public TypeCache TypeCache = null!;
     public void Execute()
     {
         ResolveEventHandler assemblyResolve = CurrentDomain_AssemblyResolve;
         try
         {
+            AppDomain.CurrentDomain.AssemblyResolve += assemblyResolve;
             SplitUpReferences();
-            GetSymbolProviders();
             assemblyResolver = new AssemblyResolver(Logger, SplitReferences);
             ReadModule();
             if (ModuleDefinition.Types.Any(x => x.Name == "ProcessedByFody"))
@@ -99,30 +101,27 @@ public partial class InnerWeaver :
                 Logger.LogWarning($"The assembly has already been processed by Fody. Weaving aborted. Path: {AssemblyFilePath} ");
                 return;
             }
-            AppDomain.CurrentDomain.AssemblyResolve += assemblyResolve;
             TypeCache = new TypeCache(assemblyResolver.Resolve);
             InitialiseWeavers();
 
-            TypeCache.BuildAssembliesToScan(weaverInstances.Select(x=>x.Instance));
+            TypeCache.BuildAssembliesToScan(weaverInstances.Select(x => x.Instance));
             InitialiseTypeSystem();
             ExecuteWeavers();
             AddWeavingInfo();
             FindStrongNameKey();
             WriteModule();
             ModuleDefinition?.Dispose();
-            CleanupTempSymbolsAndAssembly();
             ExecuteAfterWeavers();
             DisposeWeavers();
         }
         catch (Exception exception)
         {
-            AppDomain.CurrentDomain.AssemblyResolve -= assemblyResolve;
             Logger.LogException(exception);
         }
         finally
         {
+            AppDomain.CurrentDomain.AssemblyResolve -= assemblyResolve;
             ModuleDefinition?.Dispose();
-            CleanupTempSymbolsAndAssembly();
             assemblyResolver?.Dispose();
         }
     }
@@ -156,11 +155,7 @@ public partial class InnerWeaver :
 
         var delegateHolder = weaverType.GetDelegateHolderFromCache();
         var weaverInstance = delegateHolder();
-        var weaverHolder = new WeaverHolder
-        {
-            Instance = weaverInstance,
-            Config = weaverConfig
-        };
+        var weaverHolder = new WeaverHolder(weaverInstance, weaverConfig);
 
         if (FodyVersion.WeaverRequiresUpdate(assembly, out var referencedVersion))
         {
@@ -231,7 +226,7 @@ public partial class InnerWeaver :
         var startNew = Stopwatch.StartNew();
 
         const TypeAttributes typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Class;
-        var typeDefinition = new TypeDefinition(null, "ProcessedByFody", typeAttributes, TypeSystem.ObjectReference);
+        var typeDefinition = new TypeDefinition($"{ModuleDefinition.Assembly.Name.Name}_Fody", "ProcessedByFody", typeAttributes, TypeSystem.ObjectReference);
         ModuleDefinition.Types.Add(typeDefinition);
 
         AddVersionField(typeof(IInnerWeaver).Assembly, "FodyVersion", typeDefinition);
@@ -304,7 +299,7 @@ public partial class InnerWeaver :
         }
     }
 
-    public sealed override object InitializeLifetimeService()
+    public sealed override object? InitializeLifetimeService()
     {
         // Returning null designates an infinite non-expiring lease.
         // We must therefore ensure that RemotingServices.Disconnect() is called when

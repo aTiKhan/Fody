@@ -11,10 +11,6 @@ public class AssemblyResolver : IAssemblyResolver
     List<string> splitReferences;
     Dictionary<string, AssemblyDefinition> assemblyDefinitionCache = new Dictionary<string, AssemblyDefinition>(StringComparer.InvariantCultureIgnoreCase);
 
-    public AssemblyResolver()
-    {
-    }
-
     public AssemblyResolver(ILogger logger, IEnumerable<string> splitReferences)
     {
         referenceDictionary = new Dictionary<string, string>();
@@ -60,17 +56,12 @@ public class AssemblyResolver : IAssemblyResolver
         }
     }
 
-    public virtual AssemblyDefinition Resolve(string assemblyName)
-    {
-        return Resolve(new AssemblyNameReference(assemblyName, null));
-    }
-
-    public virtual AssemblyDefinition Resolve(AssemblyNameReference assemblyNameReference)
+    public virtual AssemblyDefinition? Resolve(AssemblyNameReference assemblyNameReference)
     {
         return Resolve(assemblyNameReference, new ReaderParameters());
     }
 
-    public virtual AssemblyDefinition Resolve(AssemblyNameReference assemblyNameReference, ReaderParameters parameters)
+    public virtual AssemblyDefinition? Resolve(AssemblyNameReference assemblyNameReference, ReaderParameters parameters)
     {
         if (parameters == null)
         {
