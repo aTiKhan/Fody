@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;netcoreapp2.2</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Nullable" Version="1.2.1" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="16.5.0" />
+    <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="16.10.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.0" />
-    <PackageReference Include="XunitContext" Version="1.9.3" />
-    <PackageReference Include="Verify.Xunit" Version="1.33.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+    <PackageReference Include="Verify.Xunit" Version="11.18.1" />
     <PackageReference Include="Xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
     <Reference Include="Microsoft.CSharp" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <ProjectReference Include="..\AssemblyWithNoSymbols\AssemblyWithNoSymbols.csproj" />
     <ProjectReference Include="..\DummyAssembly\DummyAssembly.csproj" />
     <ProjectReference Include="..\FodyCommon\FodyCommon.csproj" />
@@ -31,12 +29,13 @@
     <Content Include="Fody\ProjectWeaversReaderTests\*.xml" CopyToOutputDirectory="Always" />
     <Content Include="Fody\ProjectWeaversReaderTests\*.txt" CopyToOutputDirectory="Always" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'net472'">
+  <ItemGroup Condition="$(TargetFrameworkIdentifier) == '.NETFramework'">
     <Reference Include="Mono.Cecil" HintPath="..\Lib\Cecil\net40\Mono.Cecil.dll" />
     <Reference Include="Mono.Cecil.Pdb" HintPath="..\Lib\Cecil\net40\Mono.Cecil.Pdb.dll" />
     <Reference Include="Mono.Cecil.Rocks" HintPath="..\Lib\Cecil\net40\Mono.Cecil.Rocks.dll" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Aliases="msbuild4" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'netcoreapp2.2'">
+  <ItemGroup Condition="$(TargetFrameworkIdentifier) == '.NETCoreApp'">
     <Reference Include="Mono.Cecil" HintPath="..\Lib\Cecil\netstandard2.0\Mono.Cecil.dll" />
     <Reference Include="Mono.Cecil.Pdb" HintPath="..\Lib\Cecil\netstandard2.0\Mono.Cecil.Pdb.dll" />
     <Reference Include="Mono.Cecil.Rocks" HintPath="..\Lib\Cecil\netstandard2.0\Mono.Cecil.Rocks.dll" />

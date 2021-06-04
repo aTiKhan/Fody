@@ -7,7 +7,7 @@ using Microsoft.Build.Utilities;
 
 namespace Fody
 {
-    public class WeavingTask : 
+    public class WeavingTask :
         Task,
         ICancelableTask
     {
@@ -17,10 +17,11 @@ namespace Fody
 
         [Required]
         public string IntermediateDirectory { get; set; } = null!;
-        public string KeyOriginatorFile { get; set; } = null!;
-        public string AssemblyOriginatorKeyFile { get; set; } = null!;
+        public string? KeyOriginatorFile { get; set; }
+        public string? AssemblyOriginatorKeyFile { get; set; }
 
         public bool SignAssembly { get; set; }
+        public bool DelaySign { get; set; }
 
         [Required]
         public string ProjectDirectory { get; set; } = null!;
@@ -28,19 +29,22 @@ namespace Fody
         [Required]
         public string ProjectFile { get; set; } = null!;
 
-        public string DocumentationFile { get; set; } = null!;
+        public string? DocumentationFile { get; set; }
 
         [Required]
         public string References { get; set; } = null!;
 
         [Required]
         public ITaskItem[] ReferenceCopyLocalFiles { get; set; } = null!;
+        [Required]
         public ITaskItem[] WeaverFiles { get; set; } = null!;
+        public string? WeaverConfiguration { get; set; }
+        public ITaskItem[]? PackageReferences { get; set; }
 
-        public string NCrunchOriginalSolutionDirectory { get; set; } = null!;
-        public string SolutionDirectory { get; set; } = null!;
+        public string? NCrunchOriginalSolutionDirectory { get; set; }
+        public string? SolutionDirectory { get; set; }
 
-        public string DefineConstants { get; set; } = null!;
+        public string? DefineConstants { get; set; }
 
         [Output]
         public string ExecutedWeavers { get; private set; } = null!;
@@ -68,6 +72,7 @@ namespace Fody
                 IntermediateDirectory = IntermediateDirectory,
                 KeyFilePath = KeyOriginatorFile ?? AssemblyOriginatorKeyFile,
                 SignAssembly = SignAssembly,
+                DelaySign = DelaySign,
                 ProjectDirectory = ProjectDirectory,
                 ProjectFilePath = ProjectFile,
                 DocumentationFilePath = DocumentationFile,
@@ -75,7 +80,8 @@ namespace Fody
                 SolutionDirectory = SolutionDirectoryFinder.Find(SolutionDirectory, NCrunchOriginalSolutionDirectory, ProjectDirectory),
                 ReferenceCopyLocalPaths = referenceCopyLocalPaths,
                 DefineConstants = defineConstants,
-                Weavers = GetWeaversFromProps().Distinct(WeaverEntry.NameComparer).ToList(),
+                Weavers = GetWeaversFromProps(),
+                WeaverConfiguration = WeaverConfiguration,
                 GenerateXsd = GenerateXsd
             };
 
@@ -112,11 +118,11 @@ namespace Fody
             return false;
         }
 
-        IEnumerable<WeaverEntry> GetWeaversFromProps()
+        public List<WeaverEntry> GetWeaversFromProps()
         {
             if (WeaverFiles == null)
             {
-                return Array.Empty<WeaverEntry>();
+                return new List<WeaverEntry>();
             }
 
             return WeaverFiles
@@ -124,15 +130,20 @@ namespace Fody
                     taskItem => new
                     {
                         taskItem.ItemSpec,
-                        ClassNames = GetConfiguredClassNames(taskItem)
+                        ClassNames = GetConfiguredClassNames(taskItem),
+                        PackageReference = GetPackageReference(taskItem)
                     })
                 .SelectMany(entry => entry.ClassNames.Select(
                     className =>
                         new WeaverEntry
                         {
                             AssemblyPath = entry.ItemSpec,
-                            ConfiguredTypeName = className
-                        }));
+                            ConfiguredTypeName = className,
+                            PrivateAssets = entry.PackageReference?.GetMetadata("PrivateAssets"),
+                            IncludeAssets = entry.PackageReference?.GetMetadata("IncludeAssets")
+                        }))
+                .Distinct(WeaverEntry.NameComparer)
+                .ToList();
         }
 
         static IEnumerable<string> GetConfiguredClassNames(ITaskItem taskItem)
@@ -142,6 +153,12 @@ namespace Fody
                 .Select(name => name.Trim())
                 .Where(name => !string.IsNullOrEmpty(name))
                 .DefaultIfEmpty();
+        }
+
+        ITaskItem? GetPackageReference(ITaskItem weaverFileItem)
+        {
+            var packageName = Path.GetFileNameWithoutExtension(weaverFileItem.ItemSpec);
+            return PackageReferences?.FirstOrDefault(p => string.Equals(p.ItemSpec, packageName, StringComparison.OrdinalIgnoreCase));
         }
 
         public void Cancel()

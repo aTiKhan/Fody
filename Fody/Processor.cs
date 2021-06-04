@@ -7,14 +7,17 @@ public partial class Processor
 {
     public string AssemblyFilePath = null!;
     public string IntermediateDirectory = null!;
-    public string KeyFilePath = null!;
+    public string? KeyFilePath;
     public bool SignAssembly;
+    public bool DelaySign;
     public string ProjectDirectory = null!;
     public string ProjectFilePath = null!;
-    public string DocumentationFilePath = null!;
+    public string? DocumentationFilePath;
     public string References = null!;
     public string SolutionDirectory = null!;
     public List<WeaverEntry> Weavers = null!;
+    public string? WeaverConfiguration;
+
     public List<string> ReferenceCopyLocalPaths = null!;
     public List<string> DefineConstants = null!;
 
@@ -38,7 +41,7 @@ public partial class Processor
     {
         var assembly = typeof(Processor).Assembly;
 
-        Logger.LogInfo($"Fody (version {typeof(Processor).Assembly.GetName().Version} @ {assembly.CodeBase}) Executing");
+        Logger.LogInfo($"Fody (version {assembly.GetName().Version} @ {assembly.CodeBase}) Executing");
 
         var stopwatch = Stopwatch.StartNew();
 
@@ -65,7 +68,7 @@ public partial class Processor
         ValidateProjectPath();
         ValidateAssemblyPath();
 
-        ConfigFiles = ConfigFileFinder.FindWeaverConfigFiles(SolutionDirectory, ProjectDirectory, Logger).ToList();
+        ConfigFiles = ConfigFileFinder.FindWeaverConfigFiles(WeaverConfiguration, SolutionDirectory, ProjectDirectory, Logger).ToList();
 
         if (!ConfigFiles.Any())
         {
@@ -79,7 +82,7 @@ public partial class Processor
         ConfigEntries = ConfigFileFinder.ParseWeaverConfigEntries(ConfigFiles);
 
         var extraEntries = ConfigEntries.Values
-            .Where(entry => !entry.ConfigFile.IsGlobal && !Weavers.Any(weaver => string.Equals(weaver.ElementName, entry.ElementName)))
+            .Where(entry => !entry.ConfigFile.AllowExtraEntries && !Weavers.Any(weaver => string.Equals(weaver.ElementName, entry.ElementName)))
             .ToArray();
 
         const string missingWeaversHelp = "Add the desired weavers via their nuget package.";
@@ -99,6 +102,7 @@ public partial class Processor
             if (ConfigEntries.TryGetValue(weaver.ElementName, out var config))
             {
                 weaver.Element = config.Content;
+                weaver.ConfigurationSource = config.ConfigFile.FilePath ?? "MSBuild property";
                 weaver.ExecutionOrder = config.ExecutionOrder;
             }
             else
@@ -107,7 +111,7 @@ public partial class Processor
             }
         }
 
-        ConfigFileFinder.EnsureSchemaIsUpToDate(SolutionDirectory, ProjectDirectory, Weavers, GenerateXsd);
+        ConfigFileFinder.EnsureSchemaIsUpToDate(ProjectDirectory, Weavers, GenerateXsd);
 
         Weavers = Weavers
             .Where(weaver => weaver.Element != null)
@@ -131,6 +135,7 @@ public partial class Processor
             innerWeaver.KeyFilePath = KeyFilePath;
             innerWeaver.ReferenceCopyLocalPaths = ReferenceCopyLocalPaths;
             innerWeaver.SignAssembly = SignAssembly;
+            innerWeaver.DelaySign = DelaySign;
             innerWeaver.Logger = Logger;
             innerWeaver.SolutionDirectoryPath = SolutionDirectory;
             innerWeaver.Weavers = Weavers;

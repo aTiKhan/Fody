@@ -1,23 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Mono.Cecil;
 
 public class AssemblyResolver : IAssemblyResolver
 {
     Dictionary<string, string> referenceDictionary;
     ILogger logger;
-    List<string> splitReferences;
     Dictionary<string, AssemblyDefinition> assemblyDefinitionCache = new Dictionary<string, AssemblyDefinition>(StringComparer.InvariantCultureIgnoreCase);
 
     public AssemblyResolver(ILogger logger, IEnumerable<string> splitReferences)
     {
         referenceDictionary = new Dictionary<string, string>();
         this.logger = logger;
-        this.splitReferences = splitReferences.ToList();
 
-        foreach (var filePath in this.splitReferences)
+        foreach (var filePath in splitReferences)
         {
             referenceDictionary[GetAssemblyName(filePath)] = filePath;
         }
@@ -42,10 +39,8 @@ public class AssemblyResolver : IAssemblyResolver
         {
             return assembly;
         }
-        if (parameters.AssemblyResolver == null)
-        {
-            parameters.AssemblyResolver = this;
-        }
+
+        parameters.AssemblyResolver ??= this;
         try
         {
             return assemblyDefinitionCache[file] = AssemblyDefinition.ReadAssembly(file, parameters);
@@ -61,12 +56,9 @@ public class AssemblyResolver : IAssemblyResolver
         return Resolve(assemblyNameReference, new ReaderParameters());
     }
 
-    public virtual AssemblyDefinition? Resolve(AssemblyNameReference assemblyNameReference, ReaderParameters parameters)
+    public virtual AssemblyDefinition? Resolve(AssemblyNameReference assemblyNameReference, ReaderParameters? parameters)
     {
-        if (parameters == null)
-        {
-            parameters = new ReaderParameters();
-        }
+        parameters ??= new ReaderParameters();
 
         if (referenceDictionary.TryGetValue(assemblyNameReference.Name, out var fileFromDerivedReferences))
         {

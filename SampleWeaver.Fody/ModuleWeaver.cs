@@ -78,12 +78,12 @@ public class ModuleWeaver :
 
         foreach (var methodInfo in methodInfos)
         {
-            LogInfo("Validating method " + methodInfo.method.FullName);
+            LogInfo("Validating method " + methodInfo.Method.FullName);
 
-            var shouldHaveSymbols = methodInfo.attribute.GetPropertyValue(SymbolValidationAttributePropertyName, true);
+            var shouldHaveSymbols = methodInfo.Attribute.GetPropertyValue(SymbolValidationAttributePropertyName, true);
             LogInfo("Assembly should have symbols: " + shouldHaveSymbols);
 
-            var hasSymbols = HasSymbols(methodInfo.method);
+            var hasSymbols = HasSymbols(methodInfo.Method);
             LogInfo("Assembly has symbols: " + hasSymbols);
 
             if (shouldHaveSymbols != hasSymbols)
@@ -93,14 +93,14 @@ public class ModuleWeaver :
         }
     }
 
-    IEnumerable<(MethodDefinition method, CustomAttribute attribute)> GetMethodInfos(string SymbolValidationAttributeTypeName)
+    IEnumerable<MethodInfos> GetMethodInfos(string symbolValidationAttributeTypeName)
     {
         return from type in ModuleDefinition.GetTypes()
-                .Where(x => x.IsClass)
-            from method in type.GetMethods()
-            let attribute = method.GetAttribute(SymbolValidationAttributeTypeName)
-            where attribute != null
-            select (method, attribute);
+               where type.IsClass
+               from method in type.GetMethods()
+               let attribute = method.ConsumeAttribute(symbolValidationAttributeTypeName)
+               where attribute != null
+               select new MethodInfos(method, attribute);
     }
 
     bool HasSymbols(MethodDefinition method)
@@ -113,19 +113,35 @@ public class ModuleWeaver :
         yield break;
     }
 
+    // Do not use ShouldCleanReference in order to test the above code
     public override bool ShouldCleanReference => false;
+}
+
+class MethodInfos
+{
+    public MethodDefinition Method { get; }
+    public CustomAttribute Attribute { get; }
+
+    public MethodInfos(MethodDefinition method, CustomAttribute attribute)
+    {
+        Method = method;
+        Attribute = attribute;
+    }
 }
 
 static class AttributeExtensionMethods
 {
-    public static CustomAttribute? GetAttribute(this ICustomAttributeProvider? attributeProvider, string attributeName)
+    public static CustomAttribute? ConsumeAttribute(this ICustomAttributeProvider attributeProvider, string attributeName)
     {
-        return attributeProvider?.CustomAttributes.GetAttribute(attributeName);
-    }
+        var attributes = attributeProvider.CustomAttributes;
+        var matches = attributes.Where(attribute => attribute.Constructor.DeclaringType.FullName == attributeName).ToList();
 
-    public static CustomAttribute? GetAttribute(this IEnumerable<CustomAttribute>? attributes, string attributeName)
-    {
-        return attributes?.FirstOrDefault(attribute => attribute.Constructor.DeclaringType.FullName == attributeName);
+        foreach (var match in matches)
+        {
+            attributes.Remove(match);
+        }
+
+        return matches.FirstOrDefault();
     }
 
     public static T GetPropertyValue<T>(this CustomAttribute attribute, string propertyName, T defaultValue)

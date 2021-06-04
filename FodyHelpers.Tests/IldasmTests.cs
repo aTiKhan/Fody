@@ -3,12 +3,11 @@ using System.Threading.Tasks;
 using VerifyXunit;
 using DummyAssembly;
 using Fody;
-using Verify;
+using VerifyTests;
 using Xunit;
-using Xunit.Abstractions;
 
-public class IldasmTests :
-    VerifyBase
+[UsesVerify]
+public class IldasmTests
 {
     [Fact]
     public void StaticPathResolution()
@@ -18,8 +17,7 @@ public class IldasmTests :
 
     VerifySettings verifySettings;
 
-    public IldasmTests(ITestOutputHelper outputHelper) :
-        base(outputHelper)
+    public IldasmTests()
     {
         verifySettings = new VerifySettings();
         verifySettings.UniqueForAssemblyConfiguration();
@@ -30,21 +28,21 @@ public class IldasmTests :
     public Task VerifyMethod()
     {
         var verify = Ildasm.Decompile(GetAssemblyPath(), "DummyAssembly.Class1::Method");
-        return Verify(verify, verifySettings);
+        return Verifier.Verify(verify, verifySettings);
     }
 
     [Fact]
     public Task VerifyDecompile()
     {
         var verify = Ildasm.Decompile(GetAssemblyPath());
-        return Verify(verify, verifySettings);
+        return Verifier.Verify(verify, verifySettings);
     }
 
     static string GetAssemblyPath()
     {
         var assembly = typeof(Class1).Assembly;
 
-        var uri = new UriBuilder(assembly.CodeBase);
+        var uri = new UriBuilder(assembly.CodeBase!);
         return Uri.UnescapeDataString(uri.Path);
     }
 }

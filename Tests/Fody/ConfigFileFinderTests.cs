@@ -2,12 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using VerifyXunit;
 using Xunit;
-using Xunit.Abstractions;
 
-public class ConfigFileFinderTests  :
-    VerifyBase
+public class ConfigFileFinderTests :
+    IDisposable
 {
     static XNamespace schemaNamespace = XNamespace.Get("http://www.w3.org/2001/XMLSchema");
     static XNamespace schemaInstanceNamespace = XNamespace.Get("http://www.w3.org/2001/XMLSchema-instance");
@@ -21,8 +19,7 @@ public class ConfigFileFinderTests  :
     string slnXmlPath;
     string slnXsdPath;
 
-    public ConfigFileFinderTests(ITestOutputHelper output) :
-        base(output)
+    public ConfigFileFinderTests()
     {
         testDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("D"));
         slnDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("D"));
@@ -35,11 +32,10 @@ public class ConfigFileFinderTests  :
         slnXsdPath = Path.Combine(slnDir, "FodyWeavers.xsd");
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
         Directory.Delete(testDir, true);
         Directory.Delete(slnDir, true);
-        base.Dispose();
     }
 
     [Fact]
@@ -69,12 +65,12 @@ public class ConfigFileFinderTests  :
             }
         };
 
-        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(slnDir, testDir, new MockBuildLogger()).ToArray();
+        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(null, slnDir, testDir, new MockBuildLogger()).ToArray();
 
-        ConfigFileFinder.EnsureSchemaIsUpToDate(slnDir, testDir, weavers, true);
+        ConfigFileFinder.EnsureSchemaIsUpToDate(testDir, weavers, true);
 
         Assert.Single(configFiles);
-        Assert.False(configFiles[0].IsGlobal);
+        Assert.False(configFiles[0].AllowExtraEntries);
         Assert.Equal(xmlPath, configFiles[0].FilePath);
 
         Assert.True(File.Exists(xsdPath));
@@ -130,8 +126,8 @@ public class ConfigFileFinderTests  :
             }
         };
 
-        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(slnDir, testDir, new MockBuildLogger()).ToArray();
-        ConfigFileFinder.EnsureSchemaIsUpToDate(slnDir, testDir, weavers, true);
+        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(null, slnDir, testDir, new MockBuildLogger()).ToArray();
+        ConfigFileFinder.EnsureSchemaIsUpToDate(testDir, weavers, true);
 
         Assert.Single(configFiles);
         Assert.Equal(xmlPath, configFiles[0].FilePath);
@@ -160,8 +156,8 @@ public class ConfigFileFinderTests  :
             }
         };
 
-        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(slnDir, testDir, new MockBuildLogger()).ToArray();
-        ConfigFileFinder.EnsureSchemaIsUpToDate(slnDir, testDir, weavers, false);
+        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(null, slnDir, testDir, new MockBuildLogger()).ToArray();
+        ConfigFileFinder.EnsureSchemaIsUpToDate(testDir, weavers, false);
 
         Assert.Single(configFiles);
         Assert.Equal(xmlPath, configFiles[0].FilePath);
@@ -193,8 +189,8 @@ public class ConfigFileFinderTests  :
             }
         };
 
-        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(slnDir, testDir, new MockBuildLogger()).ToArray();
-        ConfigFileFinder.EnsureSchemaIsUpToDate(slnDir, testDir, weavers, true);
+        var configFiles = ConfigFileFinder.FindWeaverConfigFiles(null, slnDir, testDir, new MockBuildLogger()).ToArray();
+        ConfigFileFinder.EnsureSchemaIsUpToDate(testDir, weavers, true);
 
         Assert.Single(configFiles);
         Assert.Equal(slnXmlPath, configFiles[0].FilePath);
@@ -223,8 +219,8 @@ public class ConfigFileFinderTests  :
             }
         };
 
-        var configs = ConfigFileFinder.FindWeaverConfigFiles(slnDir, testDir, new MockBuildLogger()).ToArray();
-        ConfigFileFinder.EnsureSchemaIsUpToDate(slnDir, testDir, weavers, false);
+        var configs = ConfigFileFinder.FindWeaverConfigFiles(null, slnDir, testDir, new MockBuildLogger()).ToArray();
+        ConfigFileFinder.EnsureSchemaIsUpToDate(testDir, weavers, false);
 
         Assert.Single(configs);
         Assert.Equal(xmlPath, configs[0].FilePath);

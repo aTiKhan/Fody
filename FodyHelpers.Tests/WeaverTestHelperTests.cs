@@ -5,10 +5,9 @@ using Fody;
 using Mono.Cecil;
 using VerifyXunit;
 using Xunit;
-using Xunit.Abstractions;
 
-public class WeaverTestHelperTests :
-    VerifyBase
+[UsesVerify]
+public class WeaverTestHelperTests
 {
     [Fact]
     public Task Run()
@@ -20,7 +19,7 @@ public class WeaverTestHelperTests :
 
     Task Verify(TestResult result)
     {
-        return Verify(new
+        return Verifier.Verify(new
         {
             result.Errors,
             result.Messages,
@@ -42,6 +41,25 @@ public class WeaverTestHelperTests :
     }
 
     [Fact]
+    public Task WithCustomExeAssemblyName()
+    {
+        var assemblyPath = Path.Combine(Environment.CurrentDirectory, "DummyExeAssembly.exe");
+        try
+        {
+            var weaver = new TargetWeaver();
+            var result = weaver.ExecuteTestRun(
+                assemblyPath: assemblyPath,
+                assemblyName: "NewName");
+            return Verify(result);
+        }
+        catch (BadImageFormatException) when (AppContext.TargetFrameworkName!.StartsWith(".NETCoreApp"))
+        {
+            // The .NET Core DummyExeAssembly.exe file makes Mono.Cecil throw a BadImageFormatException ¯\_(ツ)_/¯
+            return Task.CompletedTask;
+        }
+    }
+
+    [Fact]
     public Task WeaverUsingSymbols()
     {
         var assemblyPath = Path.Combine(Environment.CurrentDirectory, "DummyAssembly.dll");
@@ -51,10 +69,5 @@ public class WeaverTestHelperTests :
         Assert.True(module.HasSymbols);
 
         return Verify(result);
-    }
-
-    public WeaverTestHelperTests(ITestOutputHelper output) :
-        base(output)
-    {
     }
 }

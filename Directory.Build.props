@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
-    <Version>6.1.1</Version>
+    <Version>6.5.1</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>8.0</LangVersion>
     <NoWarn>CS1591;CS0618</NoWarn>
@@ -16,6 +16,8 @@
     <PackageTags>ILWeaving, Fody, Cecil, AOP</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Nullable>enable</Nullable>
+    <!-- work around https://github.com/dotnet/msbuild/issues/4303 -->
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
   </PropertyGroup>
 
   <Target Name="IncludeAllInPackage">

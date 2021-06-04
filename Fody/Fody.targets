@@ -47,10 +47,13 @@
         SolutionDirectory="$(SolutionDir)"
         References="@(ReferencePath)"
         SignAssembly="$(SignAssembly)"
+        DelaySign="$(DelaySign)"
         ReferenceCopyLocalFiles="@(ReferenceCopyLocalPaths)"
         DefineConstants="$(DefineConstants)"
         DocumentationFile="@(DocFileItem->'%(FullPath)')"
         WeaverFiles="@(WeaverFiles)"
+        WeaverConfiguration="$(WeaverConfiguration)"
+        PackageReferences="@(PackageReference)"
         NCrunchOriginalSolutionDirectory="$(NCrunchOriginalSolutionDir)"
         IntermediateCopyLocalFilesCache="$(IntermediateOutputPath)$(MSBuildProjectFile).Fody.CopyLocal.cache"
         GenerateXsd="$(FodyGenerateXsd)"
@@ -85,6 +88,8 @@
     </Fody.UpdateReferenceCopyLocalTask>
 
     <ItemGroup>
+      <FodyRemovedReferenceCopyLocalPaths Include="@(ReferenceCopyLocalPaths)" />
+      <FodyRemovedReferenceCopyLocalPaths Remove="@(FodyUpdatedReferenceCopyLocalPaths)" />
       <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
       <ReferenceCopyLocalPaths Include="@(FodyUpdatedReferenceCopyLocalPaths)" />
     </ItemGroup>
@@ -101,6 +106,7 @@
         ProjectDirectory="$(MSBuildProjectDirectory)"
         TargetPath="$(TargetPath)"
         SolutionDirectory="$(SolutionDir)"
+        WeaverConfiguration="$(WeaverConfiguration)"
         DefineConstants="$(DefineConstants)"
         NCrunchOriginalSolutionDirectory="$(NCrunchOriginalSolutionDir)"
       />

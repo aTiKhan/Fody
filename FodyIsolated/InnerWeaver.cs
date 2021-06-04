@@ -20,20 +20,21 @@ public partial class InnerWeaver :
 {
     public string ProjectDirectoryPath { get; set; } = null!;
     public string ProjectFilePath { get; set; } = null!;
-    public string DocumentationFilePath { get; set; } = null!;
+    public string? DocumentationFilePath { get; set; }
     public string AssemblyFilePath { get; set; } = null!;
     public string SolutionDirectoryPath { get; set; } = null!;
     public string References { get; set; } = null!;
     public List<WeaverEntry> Weavers { get; set; } = null!;
-    public string KeyFilePath { get; set; } = null!;
+    public string? KeyFilePath { get; set; }
     public bool SignAssembly { get; set; }
-    public ILogger Logger { get; set; }= null!;
+    public bool DelaySign { get; set; }
+    public ILogger Logger { get; set; } = null!;
     public string IntermediateDirectoryPath { get; set; } = null!;
     public List<string> ReferenceCopyLocalPaths { get; set; } = null!;
     public List<string> DefineConstants { get; set; } = null!;
-    #if (NETSTANDARD)
+#if (NETSTANDARD)
     public IsolatedAssemblyLoadContext LoadContext { get; set; } = null!;
-    #endif
+#endif
     bool cancelRequested;
     List<WeaverHolder> weaverInstances = new List<WeaverHolder>();
     Action? cancelDelegate;
@@ -96,14 +97,15 @@ public partial class InnerWeaver :
             SplitUpReferences();
             assemblyResolver = new AssemblyResolver(Logger, SplitReferences);
             ReadModule();
-            if (ModuleDefinition.Types.Any(x => x.Name == "ProcessedByFody"))
+            var weavingInfoClassName = GetWeavingInfoClassName();
+            if (ModuleDefinition.Types.Any(x => x.Name == weavingInfoClassName))
             {
                 Logger.LogWarning($"The assembly has already been processed by Fody. Weaving aborted. Path: {AssemblyFilePath} ");
                 return;
             }
             TypeCache = new TypeCache(assemblyResolver.Resolve);
             InitialiseWeavers();
-
+            ValidatePackageReferenceSettings(weaverInstances, Logger);
             TypeCache.BuildAssembliesToScan(weaverInstances.Select(x => x.Instance));
             InitialiseTypeSystem();
             ExecuteWeavers();
@@ -142,16 +144,25 @@ public partial class InnerWeaver :
             }
 
             var weaverHolder = InitialiseWeaver(weaverConfig);
-            weaverInstances.Add(weaverHolder);
+            if (weaverHolder != null)
+            {
+                weaverInstances.Add(weaverHolder);
+            }
         }
     }
 
-    WeaverHolder InitialiseWeaver(WeaverEntry weaverConfig)
+    WeaverHolder? InitialiseWeaver(WeaverEntry weaverConfig)
     {
         Logger.LogDebug($"Weaver '{weaverConfig.AssemblyPath}'.");
         Logger.LogDebug("  Initializing weaver");
         var assembly = LoadWeaverAssembly(weaverConfig.AssemblyPath);
         var weaverType = assembly.FindType(weaverConfig.TypeName);
+
+        if (weaverType == null)
+        {
+            Logger.LogError($"Could not find weaver type {weaverConfig.TypeName} in {weaverConfig.WeaverName}");
+            return null;
+        }
 
         var delegateHolder = weaverType.GetDelegateHolderFromCache();
         var weaverInstance = delegateHolder();
@@ -185,6 +196,7 @@ public partial class InnerWeaver :
                 Logger.SetCurrentWeaverName(weaver.Config.ElementName);
                 var startNew = Stopwatch.StartNew();
                 Logger.LogInfo("  Executing Weaver ");
+                Logger.LogDebug($"  Configuration source: {weaver.Config.ConfigurationSource}");
                 try
                 {
                     weaver.Instance.Execute();
@@ -196,6 +208,12 @@ public partial class InnerWeaver :
                 catch (MissingMemberException exception) when (weaver.IsUsingOldFodyVersion)
                 {
                     throw new WeavingException($"Failed to execute weaver {weaver.Config.AssemblyPath} due to a MissingMemberException. Message: {exception.Message}. This is likely due to the weaver referencing an old version ({weaver.FodyVersion}) of Fody.");
+                }
+                catch (FileNotFoundException exception) when (exception.Message.Contains(nameof(ValueTuple)))
+                {
+                    throw new Exception($@"Failed to execute weaver {weaver.Config.AssemblyPath} due to a failure to load ValueTuple.
+This is a known issue with in dotnet (https://github.com/dotnet/runtime/issues/27533).
+The recommended work around is to avoid using ValueTuple inside a weaver.", exception);
                 }
                 catch (Exception exception)
                 {
@@ -226,7 +244,7 @@ public partial class InnerWeaver :
         var startNew = Stopwatch.StartNew();
 
         const TypeAttributes typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Class;
-        var typeDefinition = new TypeDefinition($"{ModuleDefinition.Assembly.Name.Name}_Fody", "ProcessedByFody", typeAttributes, TypeSystem.ObjectReference);
+        var typeDefinition = new TypeDefinition(null, GetWeavingInfoClassName(), typeAttributes, TypeSystem.ObjectReference);
         ModuleDefinition.Types.Add(typeDefinition);
 
         AddVersionField(typeof(IInnerWeaver).Assembly, "FodyVersion", typeDefinition);
@@ -242,11 +260,17 @@ public partial class InnerWeaver :
         Logger.LogDebug(finishedMessage);
     }
 
+    string GetWeavingInfoClassName()
+    {
+        var classPrefix = ModuleDefinition.Assembly.Name.Name.Replace(".", "");
+        return $"{classPrefix}_ProcessedByFody";
+    }
+
     void AddVersionField(Assembly assembly, string name, TypeDefinition typeDefinition)
     {
         var weaverVersion = "0.0.0.0";
         var attrs = assembly.GetCustomAttributes(typeof(AssemblyFileVersionAttribute));
-        var fileVersionAttribute = (AssemblyFileVersionAttribute)attrs.FirstOrDefault();
+        var fileVersionAttribute = (AssemblyFileVersionAttribute?)attrs.FirstOrDefault();
         if (fileVersionAttribute != null)
         {
             weaverVersion = fileVersionAttribute.Version;
