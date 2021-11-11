@@ -31,7 +31,7 @@
     <Compile Include="..\FodyHelpers\Testing\SdkToolFinder.cs" Link="Verify\SdkToolFinder.cs" />
     <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="All" />
     <ProjectReference Include="..\FodyCommon\FodyCommon.csproj" PrivateAssets="All" />
-    <PackageReference Condition="$(Configuration)=='Release'" Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Condition="$(Configuration)=='Release'" Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
