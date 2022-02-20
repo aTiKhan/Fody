@@ -1,5 +1,4 @@
-﻿<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+﻿<Project>
   <PropertyGroup>
     <ProjectWeaverXml Condition="$(ProjectWeaverXml) == ''">$(ProjectDir)FodyWeavers.xml</ProjectWeaverXml>
     <FodyPath Condition="$(FodyPath) == ''">$(MSBuildThisFileDirectory)..\</FodyPath>
@@ -30,13 +29,14 @@
   <Target
       Name="FodyTarget"
       AfterTargets="AfterCompile"
-      Condition="Exists(@(IntermediateAssembly)) And $(DesignTimeBuild) != true And $(DisableFody) != true"
+      Condition="Exists(@(IntermediateAssembly)) And ($(DesignTimeBuild) != true Or $(BuildingForLiveUnitTesting) == true) And $(DisableFody) != true"
       DependsOnTargets="$(FodyDependsOnTargets)"
       Inputs="@(IntermediateAssembly);$(ProjectWeaverXml)"
       Outputs="$(IntermediateOutputPath)$(MSBuildProjectFile).Fody.CopyLocal.cache">
 
     <Error Condition="($(MsBuildMajorVersion) &lt; 16)"
            Text="Fody is only supported on MSBuild 16 and above. Current version: $(MsBuildMajorVersion)." />
+
     <Fody.WeavingTask
         AssemblyFile="@(IntermediateAssembly)"
         IntermediateDirectory="$(ProjectDir)$(IntermediateOutputPath)"
@@ -110,6 +110,7 @@
         DefineConstants="$(DefineConstants)"
         NCrunchOriginalSolutionDirectory="$(NCrunchOriginalSolutionDir)"
       />
+
   </Target>
 
 </Project>

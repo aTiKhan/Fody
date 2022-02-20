@@ -22,9 +22,9 @@ public partial class InnerWeaver
         weaverInstance.ProjectDirectoryPath = ProjectDirectoryPath;
         weaverInstance.ProjectFilePath = ProjectFilePath;
         weaverInstance.DocumentationFilePath = DocumentationFilePath;
-        weaverInstance.LogDebug = message => Logger.LogDebug("  " + message);
-        weaverInstance.LogInfo = message => Logger.LogInfo("  " + message);
-        weaverInstance.LogMessage = (message, importance) => Logger.LogMessage("  " + message, (int)importance);
+        weaverInstance.LogDebug = message => Logger.LogDebug(message);
+        weaverInstance.LogInfo = message => Logger.LogInfo(message);
+        weaverInstance.LogMessage = (message, importance) => Logger.LogMessage(message, (int)importance);
         weaverInstance.LogWarning = s => Logger.LogWarning(s);
         weaverInstance.LogWarningPoint = LogWarningPoint;
         weaverInstance.LogError = Logger.LogError;
@@ -33,6 +33,7 @@ public partial class InnerWeaver
         weaverInstance.FindType = TypeCache.FindType;
         weaverInstance.TryFindType = TypeCache.TryFindType;
         weaverInstance.ResolveAssembly = assemblyName => assemblyResolver.Resolve(assemblyName);
+        weaverInstance.AssemblyResolver = assemblyResolver;
     }
 
     void LogWarningPoint(string message, SequencePoint? point)
