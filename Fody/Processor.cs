@@ -19,6 +19,7 @@ public partial class Processor
     public string? WeaverConfiguration;
 
     public List<string> ReferenceCopyLocalPaths = null!;
+    public List<string> RuntimeCopyLocalPaths = null!;
     public List<string> DefineConstants = null!;
 
     public List<WeaverConfigFile> ConfigFiles = null!;
@@ -27,15 +28,13 @@ public partial class Processor
     IInnerWeaver? innerWeaver;
 
     static Dictionary<string, IsolatedAssemblyLoadContext> solutionAssemblyLoadContexts =
-        new Dictionary<string, IsolatedAssemblyLoadContext>(StringComparer.OrdinalIgnoreCase);
+        new(StringComparer.OrdinalIgnoreCase);
 
     public ILogger Logger = null!;
-    static readonly object mutex = new object();
+    static readonly object mutex = new();
 
-    static Processor()
-    {
+    static Processor() =>
         DomainAssemblyResolver.Connect();
-    }
 
     public virtual bool Execute()
     {
@@ -72,7 +71,7 @@ public partial class Processor
 
         if (!ConfigFiles.Any())
         {
-            ConfigFiles = new List<WeaverConfigFile>
+            ConfigFiles = new()
             {
                 ConfigFileFinder.GenerateDefault(ProjectDirectory, Weavers, GenerateXsd)
             };
@@ -134,6 +133,7 @@ public partial class Processor
             innerWeaver.References = References;
             innerWeaver.KeyFilePath = KeyFilePath;
             innerWeaver.ReferenceCopyLocalPaths = ReferenceCopyLocalPaths;
+            innerWeaver.RuntimeCopyLocalPaths = RuntimeCopyLocalPaths;
             innerWeaver.SignAssembly = SignAssembly;
             innerWeaver.DelaySign = DelaySign;
             innerWeaver.Logger = Logger;
@@ -148,6 +148,7 @@ public partial class Processor
             innerWeaver.Execute();
 
             ReferenceCopyLocalPaths = innerWeaver.ReferenceCopyLocalPaths;
+            RuntimeCopyLocalPaths = innerWeaver.RuntimeCopyLocalPaths;
         }
         innerWeaver = null;
     }
@@ -171,11 +172,9 @@ public partial class Processor
     IsolatedAssemblyLoadContext CreateAssemblyLoadContext()
     {
         Logger.LogDebug("Creating a new AssemblyLoadContext");
-        return new IsolatedAssemblyLoadContext();
+        return new();
     }
 
-    public void Cancel()
-    {
+    public void Cancel() =>
         innerWeaver?.Cancel();
-    }
 }

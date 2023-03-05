@@ -1,6 +1,19 @@
 ﻿{
+  ExecuteCalled: false,
   Config: {
-    foo: null
+    HasAttributes: false,
+    HasElements: false,
+    IsEmpty: true,
+    Name: {
+      LocalName: foo,
+      Namespace: {
+        NamespaceName: 
+      },
+      NamespaceName: 
+    },
+    NodeType: Element,
+    Value: ,
+    BaseUri: 
   },
   LogDebug: {
     Type: Action<string>,
@@ -67,5 +80,6 @@
     Type: TryFindTypeFunc,
     Target: TypeCache,
     Method: Boolean TryFindType(System.String, Mono.Cecil.TypeDefinition ByRef)
-  }
+  },
+  ShouldCleanReference: false
 }
