@@ -1,8 +1,3 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using Fody;
-
 public static class TypeFinder
 {
     public static Type? FindType(this Assembly readAssembly, string typeName)
@@ -11,7 +6,7 @@ public static class TypeFinder
         {
             return readAssembly
                 .GetTypes()
-                .FirstOrDefault(x => x.Name == typeName);
+                .FirstOrDefault(_ => _.Name == typeName);
         }
         catch (ReflectionTypeLoadException exception)
         {

@@ -9,6 +9,10 @@
     <FodyGenerateXsd Condition="$(FodyGenerateXsd) == ''">true</FodyGenerateXsd>
     <MsBuildMajorVersion>15</MsBuildMajorVersion>
     <MsBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MsBuildMajorVersion>
+    <FodyAfterTargets Condition="($(MsBuildMajorVersion) &lt; 17) AND '$(FodyAfterTargets)'==''">AfterCompile</FodyAfterTargets>
+    <TargetsTriggeredByCompilation Condition="'$(FodyAfterTargets)'==''">$(TargetsTriggeredByCompilation);FodyTarget</TargetsTriggeredByCompilation>
+    <DisableFody Condition='$(UseWPF)==true AND $(MSBuildProjectName.EndsWith("_wpftmp"))'>true</DisableFody>
+    <FodyTreatWarningsAsErrors Condition="$(FodyTreatWarningsAsErrors) == ''">$(TreatWarningsAsErrors)</FodyTreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup Condition="Exists($(ProjectWeaverXml))">
@@ -28,7 +32,7 @@
 
   <Target
       Name="FodyTarget"
-      AfterTargets="AfterCompile"
+      AfterTargets="$(FodyAfterTargets)"
       Condition="Exists(@(IntermediateAssembly)) And ($(DesignTimeBuild) != true Or $(BuildingForLiveUnitTesting) == true) And $(DisableFody) != true"
       DependsOnTargets="$(FodyDependsOnTargets)"
       Inputs="@(IntermediateAssembly);$(ProjectWeaverXml)"
@@ -59,6 +63,7 @@
         IntermediateCopyLocalFilesCache="$(IntermediateOutputPath)$(MSBuildProjectFile).Fody.CopyLocal.cache"
         RuntimeCopyLocalFilesCache="$(IntermediateOutputPath)$(MSBuildProjectFile).Fody.RuntimeCopyLocal.cache"
         GenerateXsd="$(FodyGenerateXsd)"
+        TreatWarningsAsErrors="$(FodyTreatWarningsAsErrors)"
       >
 
       <Output

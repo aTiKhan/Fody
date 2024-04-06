@@ -5,10 +5,11 @@
 
   <ItemGroup>
     <PackageReference Include="Fody" Version="$(IntegrationVersion)" />
-    <PackageReference Include="Virtuosity.Fody" Version="1.21.3" PrivateAssets="All" />
+    <PackageReference Include="Virtuosity.Fody" Version="3.1.1" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Weavers\Weavers.csproj" ReferenceOutputAssembly="false" />
     <WeaverFiles Include="$(SolutionDir)Weavers\bin\$(Configuration)\netstandard2.0\Weavers.dll" WeaverClassNames="NamedWeaver;NamedWeaverFromBase;ModuleWeaver" />
   </ItemGroup>
 </Project>

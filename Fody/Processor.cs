@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-
 public partial class Processor
 {
     public string AssemblyFilePath = null!;
@@ -71,10 +66,7 @@ public partial class Processor
 
         if (!ConfigFiles.Any())
         {
-            ConfigFiles = new()
-            {
-                ConfigFileFinder.GenerateDefault(ProjectDirectory, Weavers, GenerateXsd)
-            };
+            ConfigFiles = [ConfigFileFinder.GenerateDefault(ProjectDirectory, Weavers, GenerateXsd)];
             Logger.LogWarning($"Could not find a FodyWeavers.xml file at the project level ({ProjectDirectory}). A default file has been created. Please review the file and add it to your project.");
         }
 
@@ -88,7 +80,7 @@ public partial class Processor
 
         if (extraEntries.Any())
         {
-            throw new WeavingException($"No weavers found for the configuration entries {string.Join(", ", extraEntries.Select(e => e.ElementName))}. " + missingWeaversHelp);
+            throw new WeavingException($"No weavers found for the configuration entries {string.Join(", ", extraEntries.Select(_ => _.ElementName))}. " + missingWeaversHelp);
         }
 
         if (Weavers.Count == 0)
@@ -157,7 +149,7 @@ public partial class Processor
     {
         if (solutionAssemblyLoadContexts.TryGetValue(SolutionDirectory, out var loadContext))
         {
-            if (!WeaversHistory.HasChanged(Weavers.Select(x => x.AssemblyPath)))
+            if (!WeaversHistory.HasChanged(Weavers.Select(_ => _.AssemblyPath)))
             {
                 return loadContext;
             }

@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Fody;
-using Mono.Cecil;
-
 static class ReferenceCleaner
 {
     public static void CleanReferences(ModuleDefinition module, BaseModuleWeaver weaver, List<string> referenceCopyLocalPaths, List<string> runtimeCopyLocalPaths, Action<string> log)
@@ -17,7 +10,7 @@ static class ReferenceCleaner
         var weaverLibName = weaver.GetType().Assembly.GetName().Name.ReplaceCaseless(".Fody", "");
         log($"Removing reference to '{weaverLibName}'.");
 
-        var referenceToRemove = module.AssemblyReferences.FirstOrDefault(x => x.Name == weaverLibName);
+        var referenceToRemove = module.AssemblyReferences.FirstOrDefault(_ => _.Name == weaverLibName);
         if (referenceToRemove != null)
         {
             module.AssemblyReferences.Remove(referenceToRemove);

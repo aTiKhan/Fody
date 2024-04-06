@@ -1,7 +1,4 @@
-﻿using System;
-using Xunit;
-
-public class ToFriendlyStringTests
+﻿public class ToFriendlyStringTests
 {
     [Fact(Skip = "todo")]
     public void ToFriendlyName()
@@ -19,28 +16,30 @@ public class ToFriendlyStringTests
             friendlyString = friendlyString
                 .Replace(currentDirectory, string.Empty);
 // ReSharper disable StringLiteralTypo
-            var expected = @"an unhandled exception occurred:
-exception:
-foo
-type:
-system.exception
-stacktrace:
-   at tofriendlystringtests.throwexception2() in tofriendlystringtests.cs:line 60
-   at tofriendlystringtests.throwexception1() in tofriendlystringtests.cs:line 55
-   at tofriendlystringtests.tofriendlyname() in tofriendlystringtests.cs:line 15
-source:
-fodycommon.tests
-targetsite:
-void throwexception2()
-";
+            var expected = """
+                           an unhandled exception occurred:
+                           exception:
+                           foo
+                           type:
+                           system.exception
+                           stacktrace:
+                              at tofriendlystringtests.throwexception2() in tofriendlystringtests.cs:line 60
+                              at tofriendlystringtests.throwexception1() in tofriendlystringtests.cs:line 55
+                              at tofriendlystringtests.tofriendlyname() in tofriendlystringtests.cs:line 15
+                           source:
+                           fodycommon.tests
+                           targetsite:
+                           void throwexception2()
+
+                           """;
 // ReSharper restore StringLiteralTypo
             Assert.Equal(expected, friendlyString);
         }
     }
 
-    void ThrowException1() =>
+    static void ThrowException1() =>
         ThrowException2();
 
-    void ThrowException2() =>
+    static void ThrowException2() =>
         throw new("Foo");
 }

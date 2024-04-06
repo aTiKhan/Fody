@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using Fody;
-
-public class Verifier
+﻿public class Verifier
 {
     public ILogger Logger = null!;
     public string SolutionDirectory = null!;
@@ -75,7 +68,7 @@ public class Verifier
 
         ignoreCodes = ExtractVerifyIgnoreCodesConfigs(weaverConfigs).ToList();
 
-        if (DefineConstants.Any(x => x == "FodyVerifyAssembly"))
+        if (DefineConstants.Any(_ => _ == "FodyVerifyAssembly"))
         {
             return true;
         }
@@ -108,7 +101,7 @@ public class Verifier
             {
                 continue;
             }
-            foreach (var value in codesConfigs.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var value in codesConfigs.Split([','], StringSplitOptions.RemoveEmptyEntries))
             {
                 yield return value;
             }

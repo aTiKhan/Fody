@@ -7,15 +7,12 @@ using Mono.Cecil;
 using Xunit;
 
 // ReSharper disable UnusedVariable
-[UsesVerify]
 public class PeVerifierTests
 {
     string assemblyPath = "FodyHelpers.Tests.dll";
     [Fact]
-    public void StaticPathResolution()
-    {
+    public void StaticPathResolution() =>
         Assert.True(PeVerifier.FoundPeVerify);
-    }
 
     [Fact]
     public void Should_verify_current_assembly()
@@ -36,19 +33,19 @@ public class PeVerifierTests
         File.Delete(newAssemblyPath);
     }
 
-    static string[] GetIgnoreCodes()
-    {
-        return new[] {"0x80070002", "0x80131869"};
-    }
+    static string[] GetIgnoreCodes() =>
+        ["0x80070002", "0x80131869"];
 
     [Fact]
     public Task TrimLineNumbers()
     {
-        var text = PeVerifier.TrimLineNumbers(@"
-[IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::MethodWithAmp][offset 0x00000002][found Native Int][expected unmanaged pointer] Unexpected type on the stack.
-[IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::get_NullProperty][offset 0x00000006][found unmanaged pointer][expected unmanaged pointer] Unexpected type on the stack.
-[IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::set_NullProperty][offset 0x00000001] Unmanaged pointers are not a verifiable type.
-3 Error(s) Verifying C:\Code\Fody\net452\AssemblyToProcess.dll");
+        var text = PeVerifier.TrimLineNumbers(
+            """
+            [IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::MethodWithAmp][offset 0x00000002][found Native Int][expected unmanaged pointer] Unexpected type on the stack.
+            [IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::get_NullProperty][offset 0x00000006][found unmanaged pointer][expected unmanaged pointer] Unexpected type on the stack.
+            [IL]: Error: [C:\Code\net452\AssemblyToProcess.dll : UnsafeClass::set_NullProperty][offset 0x00000001] Unmanaged pointers are not a verifiable type.
+            3 Error(s) Verifying C:\Code\Fody\net452\AssemblyToProcess.dll
+            """);
         return Verifier.Verify(text);
     }
 

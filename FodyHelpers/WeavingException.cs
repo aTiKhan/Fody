@@ -1,6 +1,3 @@
-using System;
-using Mono.Cecil.Cil;
-
 namespace Fody;
 
 public class WeavingException :

@@ -1,11 +1,3 @@
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Reflection;
-using Mono.Cecil;
-
 namespace Fody;
 
 /// <summary>

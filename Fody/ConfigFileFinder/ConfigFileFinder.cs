@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-
-public static class ConfigFileFinder
+﻿public static class ConfigFileFinder
 {
     const string FodyWeaversConfigFileName = "FodyWeavers.xml";
     static readonly XNamespace schemaNamespace = XNamespace.Get("http://www.w3.org/2001/XMLSchema");
@@ -211,9 +204,8 @@ public static class ConfigFileFinder
     }
 
     static XAttribute[] SchemaInstanceAttributes =>
-        new[]
-        {
-            new XAttribute(XNamespace.Xmlns + "xsi", schemaInstanceNamespace.NamespaceName),
-            new XAttribute(schemaInstanceNamespace.GetName("noNamespaceSchemaLocation"), "FodyWeavers.xsd"),
-        };
+    [
+        new(XNamespace.Xmlns + "xsi", schemaInstanceNamespace.NamespaceName),
+        new(schemaInstanceNamespace.GetName("noNamespaceSchemaLocation"), "FodyWeavers.xsd")
+    ];
 }

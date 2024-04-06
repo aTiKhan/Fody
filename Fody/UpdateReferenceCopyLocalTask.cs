@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
-
 namespace Fody;
 
 public class UpdateCopyLocalTask : Task
@@ -35,7 +28,7 @@ public class UpdateCopyLocalTask : Task
         }
 
         var updatedReferenceCopyLocalPaths = new HashSet<string>(File.ReadAllLines(IntermediateCopyLocalFilesCache), StringComparer.OrdinalIgnoreCase);
-        var referenceCopyLocalPaths = new HashSet<string>(CopyLocalFiles.Select(x => x.ItemSpec), StringComparer.OrdinalIgnoreCase);
+        var referenceCopyLocalPaths = new HashSet<string>(CopyLocalFiles.Select(_ => _.ItemSpec), StringComparer.OrdinalIgnoreCase);
 
         var existingReferenceCopyLocalFiles = CopyLocalFiles
             .Where(item => updatedReferenceCopyLocalPaths.Contains(item.ItemSpec));

@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Linq;
-using Fody;
 
 public class WeaverFromBase : BaseModuleWeaver
 {
@@ -8,8 +6,6 @@ public class WeaverFromBase : BaseModuleWeaver
     {
     }
 
-    public override IEnumerable<string> GetAssembliesForScanning()
-    {
-        return Enumerable.Empty<string>();
-    }
+    public override IEnumerable<string> GetAssembliesForScanning() =>
+        Enumerable.Empty<string>();
 }

@@ -1,8 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using Fody;
-
 #if (NETSTANDARD)
 using StrongNameKeyPair = Mono.Cecil.StrongNameKeyPair;
 #else
@@ -72,7 +67,7 @@ public partial class InnerWeaver
         var assemblyKeyFileAttribute = ModuleDefinition
             .Assembly
             .CustomAttributes
-            .FirstOrDefault(x => x.AttributeType.Name == "AssemblyKeyFileAttribute");
+            .FirstOrDefault(_ => _.AttributeType.Name == "AssemblyKeyFileAttribute");
         if (assemblyKeyFileAttribute != null)
         {
             var keyFileSuffix = (string)assemblyKeyFileAttribute.ConstructorArguments.First().Value;

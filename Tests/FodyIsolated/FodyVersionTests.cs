@@ -1,10 +1,6 @@
-﻿using Xunit;
-
-public class FodyVersionTests
+﻿public class FodyVersionTests
 {
     [Fact]
-    public void FindFodyHelpersReference()
-    {
+    public void FindFodyHelpersReference() =>
         Assert.Equal("FodyHelpers", FodyVersion.FindFodyHelpersReference(GetType().Assembly).Name);
-    }
 }

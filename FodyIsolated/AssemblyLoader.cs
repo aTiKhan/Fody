@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-
 public partial class InnerWeaver
 {
     static Dictionary<string, Assembly> assemblies = new(StringComparer.OrdinalIgnoreCase);
@@ -18,6 +14,7 @@ public partial class InnerWeaver
         return assemblies[assemblyPath] = LoadFromFile(assemblyPath);
     }
 
+    // ReSharper disable once MemberCanBeMadeStatic.Local
     Assembly LoadFromFile(string assemblyPath)
     {
         #if(NETSTANDARD)

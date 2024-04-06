@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-
-static class AssemblyExtensions
+﻿static class AssemblyExtensions
 {
     public static string GetVersion(this Assembly assembly)
     {

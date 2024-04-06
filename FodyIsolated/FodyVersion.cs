@@ -1,7 +1,3 @@
-using System;
-using System.Reflection;
-using Fody;
-
 public static class FodyVersion
 {
     public static readonly Version Version = typeof(FodyVersion).Assembly.GetName().Version;

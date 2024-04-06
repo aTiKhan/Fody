@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using Mono.Cecil;
-
 namespace Fody;
 
 /// <summary>
@@ -13,14 +7,14 @@ public class TypeCache
 {
     Func<string, AssemblyDefinition?> resolve;
 
-    public static List<string> defaultAssemblies = new()
-    {
+    public static List<string> defaultAssemblies =
+    [
         "mscorlib",
         "System",
         "System.Runtime",
         "System.Core",
         "netstandard"
-    };
+    ];
 
     Dictionary<string, TypeDefinition> cachedTypes = new();
 
@@ -83,7 +77,7 @@ public class TypeCache
         {
             foreach (var exportedType in assembly.MainModule.ExportedTypes)
             {
-                if (definitions.Any(x => x.Name.Name == exportedType.Scope.Name))
+                if (definitions.Any(_ => _.Name.Name == exportedType.Scope.Name))
                 {
                     continue;
                 }
@@ -119,7 +113,7 @@ public class TypeCache
         if (!typeName.Contains('.'))
         {
             var types = cachedTypes.Values
-                .Where(x => x.Name == typeName)
+                .Where(_ => _.Name == typeName)
                 .ToList();
             if (types.Count > 1)
             {

@@ -1,14 +1,6 @@
-﻿using System;
-using System.IO;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-
-class SymbolReaderProvider : ISymbolReaderProvider
+﻿class SymbolReaderProvider : ISymbolReaderProvider
 {
-    DefaultSymbolReaderProvider inner;
-
-    public SymbolReaderProvider() =>
-        inner = new(false);
+    DefaultSymbolReaderProvider inner = new(false);
 
     public ISymbolReader? GetSymbolReader(ModuleDefinition module, string fileName)
     {
